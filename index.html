@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RAY PHOTO — kiểm tra AI nhận diện thực tế</title>
+<style>
+:root{color-scheme:dark;--gold:#e7c778;--panel:#1b1c20;--sub:#bdb5a6;--line:#3d3930}
+*{box-sizing:border-box}body{margin:0;background:#101114;color:#eee8d8;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}header{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}h1{font-size:18px;margin:0;font-family:Georgia,serif;font-weight:500;color:var(--gold)}.tag{font-size:11px;color:#b9aa83;border:1px solid #66563d;border-radius:20px;padding:4px 7px}main{max-width:1100px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,330px);gap:14px}.scene{position:relative;background:#08090b;border:1px solid var(--line);border-radius:7px;overflow:hidden;display:flex;justify-content:center;align-items:center;min-height:280px}.scene canvas{max-width:100%;max-height:78vh;display:block;object-fit:contain}.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}h2{font-size:15px;color:var(--gold);margin:3px 0 10px}button,.upload{display:inline-flex;align-items:center;justify-content:center;background:#e7c778;border:1px solid #e7c778;color:#201a12;padding:12px 16px;border-radius:7px;cursor:pointer;font-weight:650;font-size:14px}button:disabled{opacity:.45;cursor:wait}button.secondary,.upload{background:#2b2929;border-color:#706348;color:#efe1bd}button{width:100%;margin:5px 0}.upload{width:100%;position:relative}
+/* iPhone Safari: actual, visibly tappable native file control (not a hidden overlay inside a label). */
+#pick{display:block;appearance:auto;-webkit-appearance:auto;width:100%;max-width:100%;min-height:62px;padding:10px 8px;border:1px dashed #b79a5a;border-radius:8px;background:#27241e;color:#f3e4c2;font:15px/1.5 system-ui,-apple-system,sans-serif;cursor:pointer;margin:8px 0 5px}
+#pick::file-selector-button{background:#e7c778;color:#201a12;border:0;border-radius:6px;font-weight:700;padding:12px;margin-right:10px;cursor:pointer}
+.upload-help{font-size:14px;line-height:1.55;color:#f1d996;margin:8px 0 4px}
+#fileStatus{font-size:13px;min-height:36px;color:#cfc4ac;margin:4px 0 13px;overflow-wrap:anywhere}
+@media(max-width:780px){#pick{font-size:16px;min-height:66px}}label.check{display:flex;gap:8px;align-items:center;font-size:13px;margin:9px 0;color:#e9dbb9}label.check input{accent-color:#e7c778}small,p{line-height:1.55;color:var(--sub)}p{font-size:13px}.status{border:1px solid #6a563d;border-radius:7px;padding:10px;margin-top:12px;font-size:13px;line-height:1.55;background:#211e19;white-space:pre-wrap;min-height:65px}dl{font-size:13px;display:grid;grid-template-columns:105px auto;gap:10px;margin:10px 0}dt{color:#aaa096}dd{margin:0;font-weight:600}pre{overflow-wrap:anywhere;white-space:pre-wrap;word-break:break-word;font:11px/1.45 ui-monospace,monospace;color:#adcaaf;max-height:210px;overflow:auto;background:#121418;padding:10px;border-radius:6px}.hint{font-size:12px} .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#c9c0ad;margin:9px 0}.swatch{width:10px;height:10px;display:inline-block;border-radius:100%;margin-right:3px} @media(max-width:780px){main{display:flex;flex-direction:column;padding:8px;gap:10px}.scene canvas{max-height:60vh}.panel{padding:13px}header h1{font-size:15px}}
+</style></head>
+<body><header><h1>RAY PHOTO <span style="font:11px system-ui;color:#bfb18c">AI · KIỂM TRA THỰC</span></h1><span class="tag">Chỉ dùng để kiểm thử · Không chỉnh ảnh</span></header>
+<main>
+<div>
+<div class="scene"><canvas id="canvas" role="img" aria-label="Ảnh thử với mốc AI hiển thị khi nhận diện thành công"></canvas></div>
+<div class="legend"><span><i class="swatch" style="background:#69d4a5"></i>Tư thế</span><span><i class="swatch" style="background:#e7c778"></i>Mặt</span><span><i class="swatch" style="background:#fa81a5"></i>Viền tách người</span></div>
+</div>
+<div class="panel">
+<h2>Thử AI giống RAY v54</h2>
+<p>Chọn một ảnh trên điện thoại, sau đó bấm <b>Quét AI</b>. Mốc và đường viền do MediaPipe 0.10.21 nhận diện trực tiếp trên thiết bị, không có mốc giả lập.</p>
+<p class="upload-help"><b>BƯỚC 1 · Chọn ảnh từ điện thoại</b></p>
+<input type="file" id="pick" accept="image/*,.heic,.heif" aria-label="Chọn ảnh từ thư viện điện thoại">
+<div id="fileStatus" role="status">Chưa chọn ảnh. Bấm vào nút chọn tệp ở trên.</div>
+<p class="upload-help"><b>BƯỚC 2 · Bấm quét AI</b></p>
+<button id="run" disabled>✦ QUÉT AI ẢNH ĐANG CHỌN</button>
+<label class="check"><input type="checkbox" id="showpose" checked>Hiện khớp tư thế (33 điểm/người)</label>
+<label class="check"><input type="checkbox" id="showface" checked>Hiện điểm khuôn mặt</label>
+<label class="check"><input type="checkbox" id="showmask" checked>Hiện đường viền người (tách nền)</label>
+<div class="status" id="status" role="status">Chưa quét. Ảnh vẫn nguyên bản.</div>
+<dl><dt>Tư thế</dt><dd id="posen">—</dd><dt>Khuôn mặt</dt><dd id="facen">—</dd><dt>Mặt nạ</dt><dd id="maskn">—</dd><dt>Khớp rõ</dt><dd id="joints">—</dd><dt>Thời gian</dt><dd id="elapsed">—</dd></dl>
+<p class="hint">Thứ tự ưu tiên kiểm chứng: vai → khuỷu → cổ tay → hông. Váy rộng che eo/bụng nên AI không thể tự xác định số đo thật. Nếu mất mạng/AI không tải được, lỗi sẽ hiện bên dưới.</p>
+<pre id="log">Chưa có nhật ký.</pre>
+</div></main>
+<img id="original" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22720%22%20height%3D%22900%22%20viewBox%3D%220%200%20720%20900%22%3E%3Crect%20width%3D%22720%22%20height%3D%22900%22%20fill%3D%22%23191a1e%22%2F%3E%3Crect%20x%3D%2236%22%20y%3D%2236%22%20width%3D%22648%22%20height%3D%22828%22%20rx%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22%236e5d3f%22%20stroke-width%3D%222%22%20stroke-dasharray%3D%2216%2012%22%2F%3E%3Ctext%20x%3D%22360%22%20y%3D%22410%22%20text-anchor%3D%22middle%22%20fill%3D%22%23e7c778%22%20font-size%3D%2242%22%20font-family%3D%22Georgia%2Cserif%22%3ERAY%20PHOTO%3C%2Ftext%3E%3Ctext%20x%3D%22360%22%20y%3D%22466%22%20text-anchor%3D%22middle%22%20fill%3D%22%23c8bba4%22%20font-size%3D%2225%22%20font-family%3D%22Arial%2Csans-serif%22%3ECh%E1%BB%8Dn%20%E1%BA%A3nh%20t%E1%BB%AB%20th%C6%B0%20vi%E1%BB%87n%3C%2Ftext%3E%3Ctext%20x%3D%22360%22%20y%3D%22513%22%20text-anchor%3D%22middle%22%20fill%3D%22%23c8bba4%22%20font-size%3D%2222%22%20font-family%3D%22Arial%2Csans-serif%22%3Er%E1%BB%93i%20b%E1%BA%A5m%20Qu%C3%A9t%20AI%3C%2Ftext%3E%3C%2Fsvg%3E" alt="" hidden>
+<script type="module">
+const $=id=>document.getElementById(id), cv=$('canvas'),ctx=cv.getContext('2d'), orig=$('original'), output={pose:null,face:null,segment:null};
+const limit=(promise,ms,what)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(Error(what+' quá thời gian '+Math.round(ms/1000)+' giây')),ms))]);
+const urls={pose:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',face:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',segment:'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/1/selfie_multiclass_256x256.tflite'};
+const cdns=['https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21','https://unpkg.com/@mediapipe/tasks-vision@0.10.21'];
+let image=null,busy=false,logs=[],haveRun=false,selectedFile=false;
+function log(s){logs.push(new Date().toLocaleTimeString('vi-VN')+'  '+s);$('log').textContent=logs.join('\n');$('status').textContent=s;}
+function fit(){let scale=Math.min(1,1024/Math.max(orig.naturalWidth,orig.naturalHeight));cv.width=Math.max(1,Math.round(orig.naturalWidth*scale));cv.height=Math.max(1,Math.round(orig.naturalHeight*scale));ctx.drawImage(orig,0,0,cv.width,cv.height);}
+function valid(p){return p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1&&p.visibility!==0&&(p.visibility===undefined||p.visibility>=.5)&&(p.presence===undefined||p.presence>=.5)}
+const limbs=[[11,13],[13,15],[12,14],[14,16],[11,12],[11,23],[12,24],[23,24],[23,25],[24,26],[25,27],[26,28]];
+function dot(p,color,r=3){ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x*cv.width,p.y*cv.height,r,0,Math.PI*2);ctx.fill()}
+function drawMask(){const result=output.segment;if(!result?.values?.length)return;const W=result.width,H=result.height,N=W*H,values=result.values;const isPerson=new Uint8Array(N);for(let i=0;i<N;i++){let bg=values[0][i],peak=bg,category=0;for(let c=1;c<values.length;c++)if(values[c][i]>peak){peak=values[c][i];category=c}isPerson[i]=category!==0&&peak>=.35?1:0;}const scratch=document.createElement('canvas');scratch.width=W;scratch.height=H;const g=scratch.getContext('2d');const id=g.createImageData(W,H);let count=0;for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;if(!isPerson[i])continue;count++;if(isPerson[i-1]&&isPerson[i+1]&&isPerson[i-W]&&isPerson[i+W])continue;id.data[i*4]=250;id.data[i*4+1]=129;id.data[i*4+2]=165;id.data[i*4+3]=255;}g.putImageData(id,0,0);ctx.save();ctx.imageSmoothingEnabled=true;ctx.globalAlpha=.95;ctx.drawImage(scratch,0,0,cv.width,cv.height);ctx.restore();$('maskn').textContent='Có viền; '+Math.round(100*count/N)+'% khung ảnh (ước lượng)'}
+function drawPose(){const poses=output.pose?.landmarks||[];let summary=[];for(const [i,pose] of poses.entries()){ctx.save();ctx.lineWidth=Math.max(1.4,cv.width/450);ctx.strokeStyle='#69d4a5';for(const [a,b] of limbs){if(!valid(pose[a])||!valid(pose[b]))continue;ctx.beginPath();ctx.moveTo(pose[a].x*cv.width,pose[a].y*cv.height);ctx.lineTo(pose[b].x*cv.width,pose[b].y*cv.height);ctx.stroke();}for(const ix of [0,11,12,13,14,15,16,23,24,25,26,27,28])if(valid(pose[ix]))dot(pose[ix],'#69d4a5',Math.max(2.5,cv.width/330));ctx.restore();let names={11:'vai trái',12:'vai phải',13:'khuỷu trái',14:'khuỷu phải',15:'cổ tay trái',16:'cổ tay phải',23:'hông trái',24:'hông phải',25:'gối trái',26:'gối phải',27:'cổ chân trái',28:'cổ chân phải'};let known=Object.entries(names).filter(([key])=>valid(pose[Number(key)])).map(([,n])=>n);summary.push('Người '+(i+1)+': '+known.join(', '));} $('joints').textContent=summary.length?summary.join(' | '):'Không có khớp rõ';$('posen').textContent=String(poses.length)}
+const oval=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+function drawFaces(){const faces=output.face?.faceLandmarks||[];for(const f of faces){ctx.save();ctx.strokeStyle='#e7c778';ctx.lineWidth=Math.max(1.2,cv.width/540);ctx.beginPath();oval.forEach((ix,i)=>{let p=f[ix];if(!p)return;if(i===0)ctx.moveTo(p.x*cv.width,p.y*cv.height);else ctx.lineTo(p.x*cv.width,p.y*cv.height)});ctx.closePath();ctx.stroke();for(const ix of [10,152,1,13,14,33,133,362,263,61,291])if(f[ix])dot(f[ix],'#e7c778',Math.max(1.5,cv.width/570));ctx.restore()}$('facen').textContent=String(faces.length)}
+function draw(){fit();if($('showmask').checked)drawMask();if($('showpose').checked)drawPose();else $('posen').textContent=String(output.pose?.landmarks?.length||0);if($('showface').checked)drawFaces();else $('facen').textContent=String(output.face?.faceLandmarks?.length||0)}
+async function waitImg(img){if(img.complete&&img.naturalWidth)return;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Không mở được ảnh'))})}
+async function run(){if(busy)return;if(!selectedFile){$('status').textContent='Hãy chọn ảnh từ thư viện trước khi quét AI.';return;}busy=true;$('run').disabled=true;logs=[];output.pose=null;output.face=null;output.segment=null;['posen','facen','maskn','joints','elapsed'].forEach(x=>$(x).textContent='—');const start=performance.now();try{await waitImg(orig);fit();log('Đang tải thư viện MediaPipe 0.10.21…');let vision,files,lastError;for(const root of cdns){try{vision=await limit(import(root+'/vision_bundle.mjs'),20000,'Tải thư viện');files=await limit(vision.FilesetResolver.forVisionTasks(root+'/wasm'),15000,'Khởi tạo WASM');log('Đã tải thư viện từ '+new URL(root).hostname);break}catch(e){lastError=e;log('Nguồn '+root+' không khả dụng: '+(e.message||e))}}if(!vision)throw new Error('Không tải được thư viện: '+String(lastError||''));const definitions=[['pose',vision.PoseLandmarker,{numPoses:8,minPoseDetectionConfidence:.55,minPosePresenceConfidence:.55}],['face',vision.FaceLandmarker,{numFaces:8,minFaceDetectionConfidence:.55,minFacePresenceConfidence:.55,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:false}],['segment',vision.ImageSegmenter,{outputConfidenceMasks:true,outputCategoryMask:false}]];for(const [key,Class,extra] of definitions){let t0=performance.now(),model;try{log('Đang tải mô hình '+key+'…');const controller=new AbortController();const stopper=setTimeout(()=>controller.abort(),45000);let response;try{response=await fetch(urls[key],{credentials:'omit',signal:controller.signal});}finally{clearTimeout(stopper)}if(!response.ok)throw Error('HTTP '+response.status);const bytes=new Uint8Array(await response.arrayBuffer());log('Đã tải '+key+' ('+(bytes.length/1048576).toFixed(1)+' MB). Đang chạy…');model=await limit(Class.createFromOptions(files,{baseOptions:{modelAssetBuffer:bytes,delegate:'CPU'},runningMode:'IMAGE',...extra}),45000,'Khởi tạo mô hình '+key);if(key==='pose'){let r=model.detect(cv);output.pose={landmarks:(r.landmarks||[]).map(list=>list.map(pt=>({...pt})))};try{r.close?.()}catch{}}else if(key==='face'){let r=model.detect(cv);output.face={faceLandmarks:(r.faceLandmarks||[]).map(list=>list.map(pt=>({...pt})))};try{r.close?.()}catch{}}else{let r=model.segment(cv);try{const masks=r.confidenceMasks||[];output.segment=masks.length?{width:masks[0].width,height:masks[0].height,values:masks.map(x=>new Float32Array(x.getAsFloat32Array()))}:null;}finally{try{r.close?.()}catch{}}}log('✓ '+key+' hoàn tất '+((performance.now()-t0)/1000).toFixed(1)+' giây');}catch(e){log('✗ '+key+' THẤT BẠI: '+(e.message||String(e)));}finally{try{model?.close()}catch{}}}
+ draw();$('elapsed').textContent=((performance.now()-start)/1000).toFixed(1)+' giây';let p=output.pose?.landmarks?.length||0,f=output.face?.faceLandmarks?.length||0,m=!!output.segment?.values?.length;log('KẾT QUẢ: '+p+' tư thế, '+f+' khuôn mặt, tách người: '+(m?'có':'không')+'. Đây là mốc do MediaPipe thực sự trả về, không có mốc tự đặt.');haveRun=true;
+ }catch(e){log('THẤT BẠI: '+(e.message||String(e))+'. Kiểm tra mạng/CDN rồi thử lại.');}finally{busy=false;$('run').disabled=false}}
+$('run').onclick=run;
+for(const id of ['showmask','showpose','showface'])$(id).onchange=()=>{if(haveRun)draw()};
+let currentObjectUrl=null, pickToken=0;
+$('pick').addEventListener('change',e=>{
+  const file=e.currentTarget.files?.[0];
+  if(!file)return;
+  if(busy){$('fileStatus').textContent='AI đang quét, hãy chọn ảnh khi quét xong.';return;}
+  const token=++pickToken;
+  const url=URL.createObjectURL(file);
+  const probe=new Image();
+  $('fileStatus').textContent='Đang mở ảnh: '+file.name+'…';
+  probe.onload=()=>{
+    if(token!==pickToken){URL.revokeObjectURL(url);return;}
+    const previous=currentObjectUrl;
+    orig.onload=()=>{
+      orig.onload=null;orig.onerror=null;
+      if(previous) URL.revokeObjectURL(previous);
+      currentObjectUrl=url;
+      selectedFile=true;$('run').disabled=false;
+      haveRun=false;output.pose=null;output.face=null;output.segment=null;
+      ['posen','facen','maskn','joints','elapsed'].forEach(id=>$(id).textContent='—');
+      fit();
+      $('fileStatus').textContent='✓ Đã chọn: '+file.name+' ('+orig.naturalWidth+' × '+orig.naturalHeight+').';
+      $('status').textContent='Đã mở ảnh mới. Bấm QUÉT AI ẢNH ĐANG CHỌN.';
+      $('log').textContent='Chưa quét ảnh mới.';
+    };
+    orig.onerror=()=>{
+      orig.onload=null;orig.onerror=null;
+      $('fileStatus').textContent='Không hiển thị được ảnh này. Thử chọn JPG/PNG hoặc bật Ảnh tương thích trên iPhone.';
+      URL.revokeObjectURL(url);
+    };
+    orig.src=url;
+  };
+  probe.onerror=()=>{
+    URL.revokeObjectURL(url);
+    $('fileStatus').textContent='Không mở được '+file.name+'. Thử chọn ảnh JPG hoặc PNG. Ảnh HEIC cần trình duyệt hỗ trợ.';
+    $('status').textContent='Chưa thay đổi ảnh thử.';
+  };
+  probe.src=url;
+});
+await waitImg(orig);fit();
+</script></body></html>
